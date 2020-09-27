@@ -37,9 +37,22 @@ public class UserController {
         return returnValue;
     }
 
-    @PutMapping
-    public String updateUser(){
-        return "update user called";
+    @PutMapping(path = "/{id}", consumes = { MediaType.APPLICATION_XML_VALUE,
+            MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_XML_VALUE,
+            MediaType.APPLICATION_JSON_VALUE })
+//    @ApiImplicitParams({
+//            @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")
+//    })
+    public UserRest updateUser(@PathVariable String id, @RequestBody UserDetailsRequestModel userDetails) {
+        UserRest returnValue = new UserRest();
+
+        UserDto userDto = new UserDto();
+        //userDto = new ModelMapper().map(userDetails, UserDto.class);
+        BeanUtils.copyProperties(userDetails, userDto);
+        UserDto updateUser = userService.updateUser(id, userDto);
+        //returnValue = new ModelMapper().map(updateUser, UserRest.class);
+        BeanUtils.copyProperties(updateUser, returnValue);
+        return returnValue;
     }
 
     @DeleteMapping
