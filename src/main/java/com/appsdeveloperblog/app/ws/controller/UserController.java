@@ -7,6 +7,7 @@ import com.appsdeveloperblog.app.ws.ui.model.response.ErrorMessages;
 import com.appsdeveloperblog.app.ws.ui.model.response.OperationStatusModel;
 import com.appsdeveloperblog.app.ws.ui.model.response.RequestOperationStatus;
 import com.appsdeveloperblog.app.ws.ui.model.response.UserRest;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -36,9 +37,11 @@ public class UserController {
     public UserRest createUser(@RequestBody UserDetailsRequestModel userDetails) {
         UserRest returnValue = new UserRest();
         UserDto userDto = new UserDto();
-        BeanUtils.copyProperties(userDetails, userDto);
+        //BeanUtils.copyProperties(userDetails, userDto);
+        userDto = new ModelMapper().map(userDetails, UserDto.class);
         UserDto createdUser = userService.createUser(userDto);
-        BeanUtils.copyProperties(createdUser, returnValue);
+        //BeanUtils.copyProperties(createdUser, returnValue);
+        returnValue = new ModelMapper().map(createdUser, UserRest.class);
         return returnValue;
     }
 
@@ -52,11 +55,11 @@ public class UserController {
         UserRest returnValue = new UserRest();
 
         UserDto userDto = new UserDto();
-        //userDto = new ModelMapper().map(userDetails, UserDto.class);
-        BeanUtils.copyProperties(userDetails, userDto);
+        userDto = new ModelMapper().map(userDetails, UserDto.class);
+        //BeanUtils.copyProperties(userDetails, userDto);
         UserDto updateUser = userService.updateUser(id, userDto);
-        //returnValue = new ModelMapper().map(updateUser, UserRest.class);
-        BeanUtils.copyProperties(updateUser, returnValue);
+        returnValue = new ModelMapper().map(updateUser, UserRest.class);
+        //BeanUtils.copyProperties(updateUser, returnValue);
         return returnValue;
     }
 
