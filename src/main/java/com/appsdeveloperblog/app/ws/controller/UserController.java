@@ -8,11 +8,13 @@ import com.appsdeveloperblog.app.ws.ui.model.response.OperationStatusModel;
 import com.appsdeveloperblog.app.ws.ui.model.response.RequestOperationStatus;
 import com.appsdeveloperblog.app.ws.ui.model.response.UserRest;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +29,8 @@ public class UserController {
         UserRest returnValue = new UserRest();
 
         UserDto userDto = userService.getUserByUserId(id);
-        BeanUtils.copyProperties(userDto, returnValue);
+        ModelMapper modelMapper = new ModelMapper();
+        returnValue = modelMapper.map(userDto, UserRest.class);
         return returnValue;
     }
 
@@ -56,10 +59,10 @@ public class UserController {
 
         UserDto userDto = new UserDto();
         userDto = new ModelMapper().map(userDetails, UserDto.class);
-        //BeanUtils.copyProperties(userDetails, userDto);
+
         UserDto updateUser = userService.updateUser(id, userDto);
         returnValue = new ModelMapper().map(updateUser, UserRest.class);
-        //BeanUtils.copyProperties(updateUser, returnValue);
+
         return returnValue;
     }
 
@@ -89,15 +92,15 @@ public class UserController {
 
         List<UserDto> users = userService.getUsers(page, limit);
 
-//        Type listType = new TypeToken<List<UserRest>>() {
-//        }.getType();
-//        returnValue = new ModelMapper().map(users, listType);
+        Type listType = new TypeToken<List<UserRest>>() {
+        }.getType();
+        returnValue = new ModelMapper().map(users, listType);
 
-		for (UserDto userDto : users) {
-			UserRest userModel = new UserRest();
-			BeanUtils.copyProperties(userDto, userModel);
-			returnValue.add(userModel);
-		}
+//		for (UserDto userDto : users) {
+//			UserRest userModel = new UserRest();
+//			BeanUtils.copyProperties(userDto, userModel);
+//			returnValue.add(userModel);
+//		}
 
         return returnValue;
     }
