@@ -10,12 +10,19 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.Link;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 @RequestMapping("users")
@@ -135,14 +142,21 @@ public class UserController {
 
     @GetMapping(path = "/{userId}/addresses/{addressId}", produces = { MediaType.APPLICATION_JSON_VALUE,
             MediaType.APPLICATION_XML_VALUE, "application/hal+json" })
-    public AddressesRest getUserAddress(@PathVariable String userId, @PathVariable String addressId) {
+    public EntityModel<AddressesRest> getUserAddress(@PathVariable String userId, @PathVariable String addressId) {
 
         AddressDTO addressesDto = addressesService.getAddress(addressId);
 
         ModelMapper modelMapper = new ModelMapper();
+        Link addressLink = linkTo(methodOn(UserController.class).getUserAddress(userId, addressId)).withSelfRel();
+        Link userLink = linkTo(UserController.class).slash(userId).withRel("user");
+        Link addressesLink = linkTo(methodOn(UserController.class).getUserAddresses(userId)).withRel("addresses");
 
-        AddressesRest addressesRestModel = modelMapper.map(addressesDto, AddressesRest.class);
+        AddressesRest returnValue = modelMapper.map(addressesDto, AddressesRest.class);
+//
+//        returnValue.add(addressLink);
+//        returnValue.add(userLink);
+//        returnValue.add(addressesLink);
 
-        return addressesRestModel;
+        return EntityModel.of(returnValue, Arrays.asList(userLink,addressesLink,addressLink));
     }
 }
