@@ -4,6 +4,7 @@ import com.appsdeveloperblog.app.ws.exceptions.UserServiceException;
 import com.appsdeveloperblog.app.ws.io.repository.UserRepository;
 import com.appsdeveloperblog.app.ws.io.entity.UserEntity;
 import com.appsdeveloperblog.app.ws.service.UserService;
+import com.appsdeveloperblog.app.ws.shared.AmazonSES;
 import com.appsdeveloperblog.app.ws.shared.Utils;
 import com.appsdeveloperblog.app.ws.shared.dto.AddressDTO;
 import com.appsdeveloperblog.app.ws.shared.dto.UserDto;
@@ -35,6 +36,9 @@ public class UserServiceImpl implements UserService {
     @Autowired
     BCryptPasswordEncoder bCryptPasswordEncoder;
 
+    @Autowired
+    AmazonSES amazonSES;
+
     @Override
     public UserDto createUser(UserDto user) {
         if (userRepository.findUserByEmail(user.getEmail()) != null) {
@@ -51,13 +55,16 @@ public class UserServiceImpl implements UserService {
         //BeanUtils.copyProperties(user,userEntity);
         userEntity = new ModelMapper().map(user, UserEntity.class);
         String publicUserId = utils.generateUserId(30);
-
-        userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         userEntity.setUserId(publicUserId);
+        userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+        userEntity.setEmailVerificationToken(utils.generateEmailVerificationToken(publicUserId));
+
         UserEntity storedUserDetail = userRepository.save(userEntity);
-        UserDto returnValue = new UserDto();
         //BeanUtils.copyProperties(storedUserDetail,returnValue);
-        returnValue = new ModelMapper().map(storedUserDetail, UserDto.class);
+        UserDto returnValue = new ModelMapper().map(storedUserDetail, UserDto.class);
+        // Send an email message to user to verify their email address
+        amazonSES.verifyEmail(returnValue);
+
         return returnValue;
     }
 
@@ -81,7 +88,11 @@ public class UserServiceImpl implements UserService {
             throw new UsernameNotFoundException(email);
         }
 
-        return new User(userEntity.getEmail(), userEntity.getEncryptedPassword(),new ArrayList<>());
+        return new User(userEntity.getEmail(), userEntity.getEncryptedPassword(),
+                userEntity.getEmailVerificationStatus(),
+                true, true,
+                true, new ArrayList<>());
+        //return new User(userEntity.getEmail(), userEntity.getEncryptedPassword(),new ArrayList<>());
     }
 
     @Override
@@ -142,6 +153,26 @@ public class UserServiceImpl implements UserService {
             UserDto userDto = new UserDto();
             BeanUtils.copyProperties(userEntity, userDto);
             returnValue.add(userDto);
+        }
+
+        return returnValue;
+    }
+
+    @Override
+    public boolean verifyEmailToken(String token) {
+        boolean returnValue = false;
+
+        // Find user by token
+        UserEntity userEntity = userRepository.findUserByEmailVerificationToken(token);
+
+        if (userEntity != null) {
+            boolean hastokenExpired = Utils.hasTokenExpired(token);
+            if (!hastokenExpired) {
+                userEntity.setEmailVerificationToken(null);
+                userEntity.setEmailVerificationStatus(Boolean.TRUE);
+                userRepository.save(userEntity);
+                returnValue = true;
+            }
         }
 
         return returnValue;
