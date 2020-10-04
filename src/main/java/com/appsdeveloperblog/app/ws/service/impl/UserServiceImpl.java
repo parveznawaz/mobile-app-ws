@@ -45,9 +45,9 @@ public class UserServiceImpl implements UserService {
     PasswordResetTokenRepository passwordResetTokenRepository;
 
     @Override
-    public UserDto createUser(UserDto user) {
-        if (userRepository.findUserByEmail(user.getEmail()) != null) {
-            throw new RuntimeException("User record already exists");
+    public UserDto createUser(UserDto user){
+        if (userRepository.findByEmail(user.getEmail()) != null) {
+            throw new UserServiceException("User record already exists");
         }
         for(int i=0;i<user.getAddresses().size();i++)
         {

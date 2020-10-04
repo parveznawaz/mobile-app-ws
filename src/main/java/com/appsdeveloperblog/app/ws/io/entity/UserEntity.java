@@ -9,7 +9,7 @@ public class UserEntity implements Serializable {
     private static final long serialVersionUID = 5313493413859894403L;
     @Id
     @GeneratedValue
-    private int id;
+    private long id;
 
     @Column(nullable = false)
     private String userId;
@@ -34,11 +34,11 @@ public class UserEntity implements Serializable {
     @OneToMany(mappedBy="userDetails", cascade=CascadeType.ALL)
     private List<AddressEntity> addresses;
 
-    public int getId() {
+    public long getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(long id) {
         this.id = id;
     }
 
