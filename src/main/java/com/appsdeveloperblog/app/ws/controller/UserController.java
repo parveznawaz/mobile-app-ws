@@ -8,6 +8,9 @@ import com.appsdeveloperblog.app.ws.ui.model.request.PasswordResetModel;
 import com.appsdeveloperblog.app.ws.ui.model.request.PasswordResetRequestModel;
 import com.appsdeveloperblog.app.ws.ui.model.request.UserDetailsRequestModel;
 import com.appsdeveloperblog.app.ws.ui.model.response.*;
+import io.swagger.annotations.ApiImplicitParam;
+import io.swagger.annotations.ApiImplicitParams;
+import io.swagger.annotations.ApiOperation;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.beans.BeanUtils;
@@ -41,6 +44,11 @@ public class UserController {
     AddressService addressesService;
 
     @PostAuthorize("hasRole('ADMIN') or returnObject.userId == principal.userId")
+    @ApiOperation(value="The Get User Details Web Service Endpoint",
+            notes="${userController.GetUser.ApiOperation.Notes}")
+    @ApiImplicitParams({
+            @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")
+    })
     @GetMapping(path = "/{id}", produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public UserRest getUser(@PathVariable String id) {
         UserRest returnValue = new UserRest();
@@ -68,9 +76,9 @@ public class UserController {
     @PutMapping(path = "/{id}", consumes = { MediaType.APPLICATION_XML_VALUE,
             MediaType.APPLICATION_JSON_VALUE }, produces = { MediaType.APPLICATION_XML_VALUE,
             MediaType.APPLICATION_JSON_VALUE })
-//    @ApiImplicitParams({
-//            @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")
-//    })
+    @ApiImplicitParams({
+            @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")
+    })
     public UserRest updateUser(@PathVariable String id, @RequestBody UserDetailsRequestModel userDetails) {
         UserRest returnValue = new UserRest();
 
@@ -87,9 +95,9 @@ public class UserController {
     //@PreAuthorize("hasAuthority('DELETE_AUTHORITY')")
     //@Secured("ROLE_ADMIN")
     @DeleteMapping(path = "/{id}", produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
-//    @ApiImplicitParams({
-//            @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")
-//    })
+    @ApiImplicitParams({
+            @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")
+    })
     public OperationStatusModel deleteUser(@PathVariable String id) {
         OperationStatusModel returnValue = new OperationStatusModel();
         returnValue.setOperationName(RequestOperationName.DELETE.name());
@@ -101,9 +109,9 @@ public class UserController {
     }
 
 
-//    @ApiImplicitParams({
-//            @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")
-//    })
+    @ApiImplicitParams({
+            @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")
+    })
     @GetMapping(produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public List<UserRest> getUsers(@RequestParam(value = "page", defaultValue = "0") int page,
                                    @RequestParam(value = "limit", defaultValue = "2") int limit) {
