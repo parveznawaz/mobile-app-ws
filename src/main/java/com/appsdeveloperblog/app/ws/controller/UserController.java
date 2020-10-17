@@ -17,6 +17,8 @@ import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.prepost.PostAuthorize;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.lang.reflect.Type;
@@ -38,6 +40,7 @@ public class UserController {
     @Autowired
     AddressService addressesService;
 
+    @PostAuthorize("hasRole('ADMIN') or returnObject.userId == principal.userId")
     @GetMapping(path = "/{id}", produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
     public UserRest getUser(@PathVariable String id) {
         UserRest returnValue = new UserRest();
@@ -80,6 +83,9 @@ public class UserController {
         return returnValue;
     }
 
+    @PreAuthorize("hasRole('ROLE_ADMIN') or #id == principal.userId")
+    //@PreAuthorize("hasAuthority('DELETE_AUTHORITY')")
+    //@Secured("ROLE_ADMIN")
     @DeleteMapping(path = "/{id}", produces = { MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE })
 //    @ApiImplicitParams({
 //            @ApiImplicitParam(name="authorization", value="${userController.authorizationHeader.description}", paramType="header")

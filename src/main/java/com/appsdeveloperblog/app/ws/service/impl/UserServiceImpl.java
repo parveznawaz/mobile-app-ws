@@ -2,9 +2,12 @@ package com.appsdeveloperblog.app.ws.service.impl;
 
 import com.appsdeveloperblog.app.ws.exceptions.UserServiceException;
 import com.appsdeveloperblog.app.ws.io.entity.PasswordResetTokenEntity;
+import com.appsdeveloperblog.app.ws.io.entity.RoleEntity;
 import com.appsdeveloperblog.app.ws.io.repository.PasswordResetTokenRepository;
+import com.appsdeveloperblog.app.ws.io.repository.RoleRepository;
 import com.appsdeveloperblog.app.ws.io.repository.UserRepository;
 import com.appsdeveloperblog.app.ws.io.entity.UserEntity;
+import com.appsdeveloperblog.app.ws.security.UserPrincipal;
 import com.appsdeveloperblog.app.ws.service.UserService;
 import com.appsdeveloperblog.app.ws.shared.AmazonSES;
 import com.appsdeveloperblog.app.ws.shared.Utils;
@@ -25,6 +28,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 @Service
@@ -42,13 +47,16 @@ public class UserServiceImpl implements UserService {
     AmazonSES amazonSES;
 
     @Autowired
+    RoleRepository roleRepository;
+
+    @Autowired
     PasswordResetTokenRepository passwordResetTokenRepository;
 
     @Override
     public UserDto createUser(UserDto user){
-        if (userRepository.findByEmail(user.getEmail()) != null) {
-            throw new UserServiceException("User record already exists");
-        }
+        if (userRepository.findByEmail(user.getEmail()) != null)
+            throw new UserServiceException("Record already exists");
+
         for(int i=0;i<user.getAddresses().size();i++)
         {
             AddressDTO address = user.getAddresses().get(i);
@@ -56,17 +64,32 @@ public class UserServiceImpl implements UserService {
             address.setAddressId(utils.generateAddressId(30));
             user.getAddresses().set(i, address);
         }
-        UserEntity userEntity = new UserEntity();
-        //BeanUtils.copyProperties(user,userEntity);
-        userEntity = new ModelMapper().map(user, UserEntity.class);
+
+        //BeanUtils.copyProperties(user, userEntity);
+        ModelMapper modelMapper = new ModelMapper();
+        UserEntity userEntity = modelMapper.map(user, UserEntity.class);
+
         String publicUserId = utils.generateUserId(30);
         userEntity.setUserId(publicUserId);
         userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(user.getPassword()));
         userEntity.setEmailVerificationToken(utils.generateEmailVerificationToken(publicUserId));
 
-        UserEntity storedUserDetail = userRepository.save(userEntity);
-        //BeanUtils.copyProperties(storedUserDetail,returnValue);
-        UserDto returnValue = new ModelMapper().map(storedUserDetail, UserDto.class);
+        // Set roles
+        Collection<RoleEntity> roleEntities = new HashSet<>();
+        for(String role: user.getRoles()) {
+            RoleEntity roleEntity = roleRepository.findByName(role);
+            if(roleEntity !=null) {
+                roleEntities.add(roleEntity);
+            }
+        }
+
+        userEntity.setRoles(roleEntities);
+
+        UserEntity storedUserDetails = userRepository.save(userEntity);
+
+        //BeanUtils.copyProperties(storedUserDetails, returnValue);
+        UserDto returnValue  = modelMapper.map(storedUserDetails, UserDto.class);
+
         // Send an email message to user to verify their email address
         amazonSES.verifyEmail(returnValue);
 
@@ -93,10 +116,11 @@ public class UserServiceImpl implements UserService {
             throw new UsernameNotFoundException(email);
         }
 
-        return new User(userEntity.getEmail(), userEntity.getEncryptedPassword(),
-                userEntity.getEmailVerificationStatus(),
-                true, true,
-                true, new ArrayList<>());
+        return new UserPrincipal(userEntity);
+//        return new User(userEntity.getEmail(), userEntity.getEncryptedPassword(),
+//                userEntity.getEmailVerificationStatus(),
+//                true, true,
+//                true, new ArrayList<>());
         //return new User(userEntity.getEmail(), userEntity.getEncryptedPassword(),new ArrayList<>());
     }
 
