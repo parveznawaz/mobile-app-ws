@@ -50,7 +50,7 @@ public class UserServiceImpl implements UserService{
 	public UserDto createUser(UserDto user) {
 
 		if(userRepository.findByEmail(user.getEmail())!=null) {
-			throw new RuntimeException("Record alread exists");
+			throw new UserServiceException("Record alread exists");
 		}
 		
 		//UserEntity userEntity = new UserEntity();
