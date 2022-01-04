@@ -10,4 +10,6 @@ import com.appsdeveloperblog.app.ws.io.entity.UserEntity;
 public interface UserRepository extends PagingAndSortingRepository<UserEntity, Long> {
 	UserEntity findByEmail(String email);
 	UserEntity findByUserId(String userId);
+	UserEntity findByEmailVerificationToken(String token);
+
 }
